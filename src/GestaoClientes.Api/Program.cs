@@ -1,3 +1,12 @@
-using GestaoClientes.Application; using GestaoClientes.Application.Common.Exceptions; using GestaoClientes.Domain.Exceptions; using GestaoClientes.Infrastructure; using GestaoClientes.Infrastructure.DataAccess; using GestaoClientes.Infrastructure.DataAccess.Seeds;
-var builder=WebApplication.CreateBuilder(args); builder.Services.AddControllers(); builder.Services.AddEndpointsApiExplorer(); builder.Services.AddSwaggerGen(options => options.SwaggerDoc("v1", new() { Title = "Gestão de Clientes API", Version = "v1", Description = "Cadastro, consulta e gerenciamento de endereços de clientes." })); builder.Services.AddApplication(); builder.Services.AddInfrastructure(builder.Configuration); var app=builder.Build(); app.UseMiddleware<ErroMiddleware>(); app.UseSwagger(); app.UseSwaggerUI(); using(var scope=app.Services.CreateScope()) await DatabaseSeeder.SemearAsync(scope.ServiceProvider.GetRequiredService<GestaoClientesDbContext>()); app.UseHttpsRedirection(); app.MapControllers(); app.Run();
-public sealed class ErroMiddleware(RequestDelegate next){public async Task Invoke(HttpContext c,ILogger<ErroMiddleware> logger){try{await next(c);}catch(BadHttpRequestException e){await Responder(c,400,e.Message);}catch(Exception e) when(e is DomainException or ArgumentException){await Responder(c,422,e.Message);}catch(ConflictException e){await Responder(c,409,e.Message);}catch(NotFoundException e){await Responder(c,404,e.Message);}catch(Exception e){logger.LogError(e,"Erro inesperado");await Responder(c,500,"Ocorreu um erro interno.");}}static async Task Responder(HttpContext c,int status,string msg){c.Response.StatusCode=status;await c.Response.WriteAsJsonAsync(new{erro=msg});}}
+using GestaoClientes.Api.Configurations;
+using GestaoClientes.Api.Filters;
+using GestaoClientes.Application;
+using GestaoClientes.Infrastructure;
+using GestaoClientes.Infrastructure.DataAccess;
+using GestaoClientes.Infrastructure.DataAccess.Seeds;
+var builder=WebApplication.CreateBuilder(args);
+builder.Services.AddControllers(options=>options.Filters.Add<ApiExceptionFilter>());
+builder.Services.AddSwaggerDocumentation();builder.Services.AddApplication();builder.Services.AddInfrastructure(builder.Configuration);
+var app=builder.Build();app.UseSwagger();app.UseSwaggerUI();
+using(var scope=app.Services.CreateScope())await DatabaseSeeder.SemearAsync(scope.ServiceProvider.GetRequiredService<GestaoClientesDbContext>());
+app.UseHttpsRedirection();app.MapControllers();app.Run();

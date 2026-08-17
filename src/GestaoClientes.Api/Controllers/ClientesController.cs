@@ -11,9 +11,9 @@ namespace GestaoClientes.Api.Controllers;
 [ApiController,Route("api/clientes")]
 public sealed class ClientesController(ICriarClienteUseCase criar,IListarClientesUseCase listar,IConsultarClienteUseCase consultar,IAtualizarClienteUseCase atualizar,IAlterarStatusClienteUseCase status,IGerenciarEnderecosUseCase enderecos) : ControllerBase
 {
-    [HttpPost] public async Task<IActionResult> Criar(CriarClienteRequest request){var response=await criar.ExecutarAsync(request);return CreatedAtAction(nameof(Obter),new{id=response.Id},response);}
-    [HttpGet] public Task<Paginado<ClienteResponse>> Listar([FromQuery]ListarClientesQuery query)=>listar.ExecutarAsync(query);
-    [HttpGet("{id:int}")] public Task<ClienteResponse> Obter(int id)=>consultar.ExecutarAsync(id);
+    [HttpPost] public async Task<IActionResult> Criar(CriarClienteRequest request){var response=await criar.ExecutarAsync(request);return CreatedAtAction(nameof(Obter),new{id=response.Id},ApiResponse<ClienteResponse>.Ok("Cliente cadastrado com sucesso.",response));}
+    [HttpGet] public async Task<IActionResult> Listar([FromQuery]ListarClientesQuery query)=>Ok(ApiResponse<Paginado<ClienteResponse>>.Ok("Clientes listados com sucesso.",await listar.ExecutarAsync(query)));
+    [HttpGet("{id:int}")] public async Task<IActionResult> Obter(int id)=>Ok(ApiResponse<ClienteResponse>.Ok("Cliente consultado com sucesso.",await consultar.ExecutarAsync(id)));
     [HttpPut("{id:int}")] public async Task<IActionResult> Atualizar(int id,AtualizarClienteRequest request){await atualizar.ExecutarAsync(id,request);return NoContent();}
     [HttpDelete("{id:int}")] public async Task<IActionResult> Inativar(int id){await status.InativarAsync(id);return NoContent();}
     [HttpPut("{id:int}/ativar")] public async Task<IActionResult> Ativar(int id){await status.AtivarAsync(id);return NoContent();}

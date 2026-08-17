@@ -36,7 +36,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try { clientes = await Http.CreateClient("Api").GetFromJsonAsync<Paginado<ClienteResponse>>("api/clientes"); }
+        try { clientes = (await Http.CreateClient("Api").GetFromJsonAsync<ApiResponse<Paginado<ClienteResponse>>>("api/clientes"))?.Dados; }
         catch { erro = "Não foi possível conectar à API. Inicie GestaoClientes.Api antes do frontend."; }
     }
 }

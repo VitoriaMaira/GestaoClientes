@@ -2,6 +2,7 @@ using GestaoClientes.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace GestaoClientes.Infrastructure.DataAccess.Mappings;
+
 public sealed class ClienteMapping : IEntityTypeConfiguration<Cliente>
 {
     public void Configure(EntityTypeBuilder<Cliente> e)

@@ -1,3 +1,10 @@
-using GestaoClientes.Application.Clientes.AlterarStatus;using GestaoClientes.Application.Clientes.Atualizar;using GestaoClientes.Application.Clientes.Consultar;using GestaoClientes.Application.Clientes.Criar;using GestaoClientes.Application.Clientes.Listar;using GestaoClientes.Application.Enderecos;using Microsoft.Extensions.DependencyInjection;
+using GestaoClientes.Application.Clientes.AlterarStatus;
+using GestaoClientes.Application.Clientes.Atualizar;
+using GestaoClientes.Application.Clientes.Consultar;
+using GestaoClientes.Application.Clientes.Criar;
+using GestaoClientes.Application.Clientes.Listar;
+using GestaoClientes.Application.Enderecos;
+using Microsoft.Extensions.DependencyInjection;
 namespace GestaoClientes.Application;
-public static class DependencyInjection { public static IServiceCollection AddApplication(this IServiceCollection services){services.AddScoped<ICriarClienteUseCase,CriarClienteUseCase>();services.AddScoped<IListarClientesUseCase,ListarClientesUseCase>();services.AddScoped<IConsultarClienteUseCase,ConsultarClienteUseCase>();services.AddScoped<IAtualizarClienteUseCase,AtualizarClienteUseCase>();services.AddScoped<IAlterarStatusClienteUseCase,AlterarStatusClienteUseCase>();services.AddScoped<IGerenciarEnderecosUseCase,GerenciarEnderecosUseCase>();return services;} }
+
+public static class DependencyInjection { public static IServiceCollection AddApplication(this IServiceCollection services) { services.AddScoped<ICriarClienteUseCase, CriarClienteUseCase>(); services.AddScoped<IListarClientesUseCase, ListarClientesUseCase>(); services.AddScoped<IConsultarClienteUseCase, ConsultarClienteUseCase>(); services.AddScoped<IAtualizarClienteUseCase, AtualizarClienteUseCase>(); services.AddScoped<IAlterarStatusClienteUseCase, AlterarStatusClienteUseCase>(); services.AddScoped<IGerenciarEnderecosUseCase, GerenciarEnderecosUseCase>(); return services; } }

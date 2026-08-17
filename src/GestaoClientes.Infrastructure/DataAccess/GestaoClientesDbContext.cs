@@ -1,6 +1,7 @@
 using GestaoClientes.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 namespace GestaoClientes.Infrastructure.DataAccess;
+
 public sealed class GestaoClientesDbContext(DbContextOptions<GestaoClientesDbContext> options) : DbContext(options)
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();

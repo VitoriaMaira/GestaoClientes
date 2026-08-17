@@ -1,22 +1,84 @@
 using GestaoClientes.Domain.Enums;
 using GestaoClientes.Domain.Exceptions;
 using GestaoClientes.Domain.ValueObjects;
+
 namespace GestaoClientes.Domain.Entities;
 
 public sealed class Cliente
 {
+    private readonly List<Endereco> _enderecos = [];
+
     private Cliente() { }
-    public Cliente(string nome, string cpf, string email, string telefone, DateOnly dataNascimento, Endereco endereco) { AtualizarDados(nome, cpf, email, telefone, dataNascimento); DataCadastro = DateTime.UtcNow; DataAtualizacao = null; Status = StatusCliente.Ativo; endereco.DefinirPrincipal(true); _enderecos.Add(endereco); }
+
+    public Cliente(string nome, string cpf, string email, string telefone, DateOnly dataNascimento, Endereco endereco)
+    {
+        if (endereco is null)
+            throw new DomainException("Cliente deve possuir pelo menos um endereço.");
+
+        DefinirDados(nome, cpf, email, telefone, dataNascimento);
+        DataCadastro = DateTime.UtcNow;
+        Status = StatusCliente.Ativo;
+        endereco.DefinirPrincipal(true);
+        _enderecos.Add(endereco);
+    }
+
     public int Id { get; private set; }
-    public string Nome { get; private set; } = null!; public string Cpf { get; private set; } = null!; public string Email { get; private set; } = null!; public string Telefone { get; private set; } = null!; public DateOnly DataNascimento { get; private set; }
+    public string Nome { get; private set; } = null!;
+    public string Cpf { get; private set; } = null!;
+    public string Email { get; private set; } = null!;
+    public string Telefone { get; private set; } = null!;
+    public DateOnly DataNascimento { get; private set; }
     public DateTime DataCadastro { get; private set; }
     public DateTime? DataAtualizacao { get; private set; }
     public StatusCliente Status { get; private set; }
-    private readonly List<Endereco> _enderecos = []; public IReadOnlyCollection<Endereco> Enderecos => _enderecos;
-    public void AtualizarDados(string nome, string cpf, string email, string telefone, DateOnly dataNascimento) { Nome = Endereco.Obrigatorio(nome, "Nome"); Cpf = new Cpf(cpf).Valor; if (!System.Net.Mail.MailAddress.TryCreate(email, out _)) throw new DomainException("E-mail inválido."); Email = email.Trim(); Telefone = Endereco.Obrigatorio(telefone, "Telefone"); if (dataNascimento == default) throw new DomainException("Data de nascimento é obrigatória."); if (dataNascimento > DateOnly.FromDateTime(DateTime.Today)) throw new DomainException("Data de nascimento não pode ser futura."); DataNascimento = dataNascimento; DataAtualizacao = DateTime.UtcNow; }
-    public void Inativar() => Status = StatusCliente.Inativo; public void Ativar() => Status = StatusCliente.Ativo;
-    public void AdicionarEndereco(Endereco endereco) { if (endereco.Principal) foreach (var item in _enderecos) item.DefinirPrincipal(false); else if (!_enderecos.Any(x => x.Principal)) endereco.DefinirPrincipal(true); _enderecos.Add(endereco); }
+    public IReadOnlyCollection<Endereco> Enderecos => _enderecos;
+
+    public void AtualizarDados(string nome, string cpf, string email, string telefone, DateOnly dataNascimento)
+    {
+        DefinirDados(nome, cpf, email, telefone, dataNascimento);
+        MarcarAtualizacao();
+    }
+
+    public void Inativar() { Status = StatusCliente.Inativo; MarcarAtualizacao(); }
+    public void Ativar() { Status = StatusCliente.Ativo; MarcarAtualizacao(); }
+
+    public void AdicionarEndereco(Endereco endereco)
+    {
+        if (endereco is null) throw new DomainException("Endereço é obrigatório.");
+        if (endereco.Principal) foreach (var item in _enderecos) item.DefinirPrincipal(false);
+        else if (!_enderecos.Any(x => x.Principal)) endereco.DefinirPrincipal(true);
+        _enderecos.Add(endereco);
+        MarcarAtualizacao();
+    }
+
     public Endereco ObterEndereco(int id) => _enderecos.SingleOrDefault(x => x.Id == id) ?? throw new DomainException("Endereço não encontrado.");
-    public void RemoverEndereco(int id) { if (_enderecos.Count == 1) throw new DomainException("Não é permitido excluir o único endereço do cliente."); _enderecos.Remove(ObterEndereco(id)); if (!_enderecos.Any(x => x.Principal)) _enderecos[0].DefinirPrincipal(true); }
-    public void DefinirEnderecoPrincipal(int id) { ObterEndereco(id); foreach (var item in _enderecos) item.DefinirPrincipal(item.Id == id); }
+
+    public void RemoverEndereco(int id)
+    {
+        if (_enderecos.Count == 1) throw new DomainException("Não é permitido excluir o único endereço do cliente.");
+        _enderecos.Remove(ObterEndereco(id));
+        if (!_enderecos.Any(x => x.Principal)) _enderecos[0].DefinirPrincipal(true);
+        MarcarAtualizacao();
+    }
+
+    public void DefinirEnderecoPrincipal(int id)
+    {
+        ObterEndereco(id);
+        foreach (var item in _enderecos) item.DefinirPrincipal(item.Id == id);
+        MarcarAtualizacao();
+    }
+
+    private void DefinirDados(string nome, string cpf, string email, string telefone, DateOnly dataNascimento)
+    {
+        Nome = Endereco.Obrigatorio(nome, "Nome");
+        Cpf = new Cpf(cpf).Valor;
+        if (!System.Net.Mail.MailAddress.TryCreate(email, out _)) throw new DomainException("E-mail inválido.");
+        Email = email.Trim();
+        Telefone = Endereco.Obrigatorio(telefone, "Telefone");
+        if (dataNascimento == default) throw new DomainException("Data de nascimento é obrigatória.");
+        if (dataNascimento > DateOnly.FromDateTime(DateTime.Today)) throw new DomainException("Data de nascimento não pode ser futura.");
+        DataNascimento = dataNascimento;
+    }
+
+    private void MarcarAtualizacao() => DataAtualizacao = DateTime.UtcNow;
 }

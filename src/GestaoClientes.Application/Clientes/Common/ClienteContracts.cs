@@ -4,48 +4,48 @@ using System.ComponentModel.DataAnnotations;
 namespace GestaoClientes.Application.Clientes.Common;
 
 public record EnderecoRequest(
-    [property: Required] string Cep,
-    [property: Required] string Logradouro,
-    [property: Required] string Numero,
+    [Required] string Cep,
+    [Required] string Logradouro,
+    [Required] string Numero,
     string? Complemento,
-    [property: Required] string Bairro,
-    [property: Required] string Cidade,
-    [property: Required] string Estado,
+    [Required] string Bairro,
+    [Required] string Cidade,
+    [Required] string Estado,
     bool Principal);
 
 public record AdicionarEnderecoRequest(
-    [property: Required] string Cep,
-    [property: Required] string Logradouro,
-    [property: Required] string Numero,
+    [Required] string Cep,
+    [Required] string Logradouro,
+    [Required] string Numero,
     string? Complemento,
-    [property: Required] string Bairro,
-    [property: Required] string Cidade,
-    [property: Required] string Estado,
+    [Required] string Bairro,
+    [Required] string Cidade,
+    [Required] string Estado,
     bool Principal);
 
 public record AtualizarEnderecoRequest(
-    [property: Required] string Cep,
-    [property: Required] string Logradouro,
-    [property: Required] string Numero,
+    [Required] string Cep,
+    [Required] string Logradouro,
+    [Required] string Numero,
     string? Complemento,
-    [property: Required] string Bairro,
-    [property: Required] string Cidade,
-    [property: Required] string Estado,
+    [Required] string Bairro,
+    [Required] string Cidade,
+    [Required] string Estado,
     bool Principal);
 
 public record CriarClienteRequest(
-    [property: Required] string Nome,
-    [property: Required] string Cpf,
-    [property: Required, EmailAddress] string Email,
-    [property: Required] string Telefone,
+    [Required] string Nome,
+    [Required] string Cpf,
+    [Required, EmailAddress] string Email,
+    [Required] string Telefone,
     DateOnly DataNascimento,
-    [property: Required] EnderecoRequest Endereco);
+    [Required] EnderecoRequest Endereco);
 
 public record AtualizarClienteRequest(
-    [property: Required] string Nome,
-    [property: Required] string Cpf,
-    [property: Required, EmailAddress] string Email,
-    [property: Required] string Telefone,
+    [Required] string Nome,
+    [Required] string Cpf,
+    [Required, EmailAddress] string Email,
+    [Required] string Telefone,
     DateOnly DataNascimento);
 
 public record ClienteResponse(

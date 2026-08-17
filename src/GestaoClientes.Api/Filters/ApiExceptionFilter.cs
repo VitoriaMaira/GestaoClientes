@@ -3,6 +3,7 @@ using GestaoClientes.Application.Common.Responses;
 using GestaoClientes.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+
 namespace GestaoClientes.Api.Filters;
 
 public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IExceptionFilter
@@ -17,7 +18,15 @@ public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IEx
             ArgumentException e => (StatusCodes.Status400BadRequest, e.Message),
             _ => (StatusCodes.Status500InternalServerError, "Ocorreu um erro interno.")
         };
-        if (status == 500) logger.LogError(context.Exception, "Erro inesperado na API");
-        context.Result = new ObjectResult(ApiResponse<object?>.Erro(mensagem)) { StatusCode = status }; context.ExceptionHandled = true;
+        if (status == StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(context.Exception, "Erro inesperado na API");
+        }
+
+        context.Result = new ObjectResult(ApiResponse<object?>.Erro(mensagem))
+        {
+            StatusCode = status
+        };
+        context.ExceptionHandled = true;
     }
 }

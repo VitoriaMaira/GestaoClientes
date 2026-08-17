@@ -72,8 +72,24 @@ else if (cliente is not null)
     <section class="panel">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="section-title mb-0">Endereços</h2>
-            <span class="text-secondary small">@cliente.Enderecos.Count endereço(s)</span>
+            <button class="btn btn-sm btn-primary" @onclick="IniciarAdicaoEndereco">
+                Adicionar endereço
+            </button>
         </div>
+
+        @if (enderecoForm is not null)
+        {
+            <div class="border rounded-3 p-3 mb-3 bg-light">
+                <h3 class="section-title">
+                    @(enderecoEdicaoId.HasValue ? "Editar endereço" : "Novo endereço")
+                </h3>
+                <EnderecoForm Model="enderecoForm"
+                              Processando="salvandoEndereco"
+                              TextoBotao="@(enderecoEdicaoId.HasValue ? "Salvar alterações" : "Adicionar endereço")"
+                              OnSubmit="SalvarEndereco"
+                              OnCancel="CancelarEdicaoEndereco" />
+            </div>
+        }
 
         <div class="table-responsive">
             <table class="table mb-0">
@@ -83,6 +99,7 @@ else if (cliente is not null)
                         <th>CEP</th>
                         <th>Cidade/UF</th>
                         <th>Tipo</th>
+                        <th class="text-end">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -95,6 +112,25 @@ else if (cliente is not null)
                                 {
                                     <small class="text-secondary d-block">@endereco.Complemento</small>
                                 }
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => IniciarEdicaoEndereco(endereco)">
+                                        Editar
+                                    </button>
+                                    @if (!endereco.Principal)
+                                    {
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => DefinirPrincipal(endereco)">
+                                            Tornar principal
+                                        </button>
+                                    }
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            disabled="@(cliente.Enderecos.Count == 1)"
+                                            title="@(cliente.Enderecos.Count == 1 ? "O único endereço não pode ser excluído" : "Excluir endereço")"
+                                            @onclick="() => RemoverEndereco(endereco)">
+                                        Excluir
+                                    </button>
+                                </div>
                             </td>
                             <td>@FormatarCep(endereco.Cep)</td>
                             <td>@endereco.Cidade/@endereco.Estado</td>
@@ -124,6 +160,9 @@ else if (cliente is not null)
     private bool carregando = true;
     private string? erro;
     private string? mensagem;
+    private EnderecoFormModel? enderecoForm;
+    private int? enderecoEdicaoId;
+    private bool salvandoEndereco;
 
     protected override Task OnParametersSetAsync()
     {
@@ -181,6 +220,109 @@ else if (cliente is not null)
             }
 
             mensagem = ativar ? "Cliente ativado com sucesso." : "Cliente inativado com sucesso.";
+            await Carregar();
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+    }
+
+    private void IniciarAdicaoEndereco()
+    {
+        enderecoEdicaoId = null;
+        enderecoForm = new EnderecoFormModel();
+        erro = null;
+    }
+
+    private void IniciarEdicaoEndereco(EnderecoModel endereco)
+    {
+        enderecoEdicaoId = endereco.Id;
+        enderecoForm = new EnderecoFormModel
+        {
+            Cep = endereco.Cep,
+            Logradouro = endereco.Logradouro,
+            Numero = endereco.Numero,
+            Complemento = endereco.Complemento,
+            Bairro = endereco.Bairro,
+            Cidade = endereco.Cidade,
+            Estado = endereco.Estado,
+            Principal = endereco.Principal
+        };
+        erro = null;
+    }
+
+    private void CancelarEdicaoEndereco()
+    {
+        enderecoForm = null;
+        enderecoEdicaoId = null;
+    }
+
+    private async Task SalvarEndereco()
+    {
+        if (enderecoForm is null)
+        {
+            return;
+        }
+
+        salvandoEndereco = true;
+        erro = null;
+
+        try
+        {
+            if (enderecoEdicaoId.HasValue)
+            {
+                await Api.AtualizarEnderecoAsync(Id, enderecoEdicaoId.Value, enderecoForm);
+                mensagem = "Endereço atualizado com sucesso.";
+            }
+            else
+            {
+                await Api.AdicionarEnderecoAsync(Id, enderecoForm);
+                mensagem = "Endereço adicionado com sucesso.";
+            }
+
+            CancelarEdicaoEndereco();
+            await Carregar();
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        finally
+        {
+            salvandoEndereco = false;
+        }
+    }
+
+    private async Task DefinirPrincipal(EnderecoModel endereco)
+    {
+        try
+        {
+            await Api.DefinirEnderecoPrincipalAsync(Id, endereco.Id);
+            mensagem = "Endereço principal alterado com sucesso.";
+            await Carregar();
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+    }
+
+    private async Task RemoverEndereco(EnderecoModel endereco)
+    {
+        var confirmou = await Js.InvokeAsync<bool>(
+            "confirm",
+            $"Deseja excluir o endereço {endereco.Logradouro}, {endereco.Numero}?");
+
+        if (!confirmou)
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.RemoverEnderecoAsync(Id, endereco.Id);
+            mensagem = "Endereço excluído com sucesso.";
             await Carregar();
         }
         catch (ClienteApiException exception)

@@ -1,4 +1,7 @@
 @page "/"
+@page "/clientes"
+@inject ClienteApiClient Api
+@inject IJSRuntime Js
 
 <PageTitle>Clientes</PageTitle>
 
@@ -10,6 +13,253 @@
     <a class="btn btn-primary" href="clientes/novo">Novo cliente</a>
 </div>
 
-<div class="panel empty-state">
-    A listagem de clientes será carregada nesta página.
-</div>
+@if (!string.IsNullOrWhiteSpace(mensagem))
+{
+    <div class="alert alert-success alert-dismissible" role="alert">
+        @mensagem
+        <button class="btn-close" type="button" aria-label="Fechar" @onclick="() => mensagem = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(erro))
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+}
+
+<section class="panel mb-3">
+    <form @onsubmit="AplicarFiltros" @onsubmit:preventDefault>
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-lg-4">
+                <label class="form-label" for="nome">Nome</label>
+                <input id="nome" class="form-control" placeholder="Buscar por nome" @bind="nome" />
+            </div>
+            <div class="col-12 col-md-5 col-lg-3">
+                <label class="form-label" for="cpf">CPF</label>
+                <input id="cpf" class="form-control" placeholder="Somente números" @bind="cpf" />
+            </div>
+            <div class="col-12 col-md-4 col-lg-2">
+                <label class="form-label" for="status">Status</label>
+                <select id="status" class="form-select" @bind="status">
+                    <option value="@StatusCliente.Ativo">Ativo</option>
+                    <option value="@StatusCliente.Inativo">Inativo</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 col-lg-3 d-grid d-md-flex gap-2">
+                <button class="btn btn-primary" type="submit" disabled="@carregando">Buscar</button>
+                <button class="btn btn-outline-secondary" type="button" @onclick="LimparFiltros" disabled="@carregando">
+                    Limpar
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+<section class="panel p-0 overflow-hidden">
+    @if (carregando && resultado is null)
+    {
+        <div class="empty-state">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <div>Carregando clientes...</div>
+        </div>
+    }
+    else if (resultado is null || resultado.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <strong>Nenhum cliente encontrado.</strong>
+            <div>Altere os filtros ou cadastre um novo cliente.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>E-mail</th>
+                        <th>Telefone</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cliente in resultado.Items)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@cliente.Nome</strong>
+                            </td>
+                            <td class="text-nowrap">@FormatarCpf(cliente.Cpf)</td>
+                            <td>@cliente.Email</td>
+                            <td class="text-nowrap">@FormatarTelefone(cliente.Telefone)</td>
+                            <td>
+                                <span class="status-badge @(cliente.Status == StatusCliente.Ativo ? "status-ativo" : "status-inativo")">
+                                    @cliente.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a class="btn btn-sm btn-outline-primary" href="clientes/@cliente.Id">Detalhes</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="clientes/@cliente.Id/editar">Editar</a>
+                                    @if (cliente.Status == StatusCliente.Ativo)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => AlterarStatus(cliente)">
+                                            Inativar
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => AlterarStatus(cliente)">
+                                            Ativar
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-3 border-top">
+            <span class="text-secondary small">
+                @resultado.TotalItens registro(s) — página @resultado.Pagina de @Math.Max(1, resultado.TotalPaginas)
+            </span>
+            <div class="btn-group" role="group" aria-label="Paginação">
+                <button class="btn btn-outline-secondary" @onclick="PaginaAnterior" disabled="@(carregando || pagina <= 1)">
+                    Anterior
+                </button>
+                <button class="btn btn-outline-secondary" @onclick="ProximaPagina" disabled="@(carregando || pagina >= resultado.TotalPaginas)">
+                    Próxima
+                </button>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private Paginado<ClienteModel>? resultado;
+    private string? nome;
+    private string? cpf;
+    private string? erro;
+    private string? mensagem;
+    private StatusCliente status = StatusCliente.Ativo;
+    private int pagina = 1;
+    private const int TamanhoPagina = 10;
+    private bool carregando;
+
+    protected override Task OnInitializedAsync()
+    {
+        return Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        carregando = true;
+        erro = null;
+
+        try
+        {
+            resultado = await Api.ListarAsync(pagina, TamanhoPagina, nome, cpf, status);
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        catch (HttpRequestException)
+        {
+            erro = "Não foi possível conectar à API. Verifique se o projeto GestaoClientes.Api está em execução.";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        pagina = 1;
+        await Carregar();
+    }
+
+    private async Task LimparFiltros()
+    {
+        nome = null;
+        cpf = null;
+        status = StatusCliente.Ativo;
+        pagina = 1;
+        await Carregar();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (pagina > 1)
+        {
+            pagina--;
+            await Carregar();
+        }
+    }
+
+    private async Task ProximaPagina()
+    {
+        if (resultado is not null && pagina < resultado.TotalPaginas)
+        {
+            pagina++;
+            await Carregar();
+        }
+    }
+
+    private async Task AlterarStatus(ClienteModel cliente)
+    {
+        var acao = cliente.Status == StatusCliente.Ativo ? "inativar" : "ativar";
+        var confirmou = await Js.InvokeAsync<bool>("confirm", $"Deseja realmente {acao} {cliente.Nome}?");
+
+        if (!confirmou)
+        {
+            return;
+        }
+
+        try
+        {
+            carregando = true;
+            if (cliente.Status == StatusCliente.Ativo)
+            {
+                await Api.InativarAsync(cliente.Id);
+            }
+            else
+            {
+                await Api.AtivarAsync(cliente.Id);
+            }
+
+            mensagem = cliente.Status == StatusCliente.Ativo
+                ? "Cliente inativado com sucesso."
+                : "Cliente ativado com sucesso.";
+            await Carregar();
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private static string FormatarCpf(string valor)
+    {
+        var numeros = new string(valor.Where(char.IsDigit).ToArray());
+        return numeros.Length == 11
+            ? $"{numeros[..3]}.{numeros[3..6]}.{numeros[6..9]}-{numeros[9..]}"
+            : valor;
+    }
+
+    private static string FormatarTelefone(string valor)
+    {
+        var numeros = new string(valor.Where(char.IsDigit).ToArray());
+        return numeros.Length == 11
+            ? $"({numeros[..2]}) {numeros[2..7]}-{numeros[7..]}"
+            : valor;
+    }
+}

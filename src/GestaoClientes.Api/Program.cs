@@ -1,11 +1,10 @@
 using GestaoClientes.Api.Configurations;
-using GestaoClientes.Api.Filters;
 using GestaoClientes.Application;
 using GestaoClientes.Infrastructure;
 using GestaoClientes.Infrastructure.DataAccess;
 using GestaoClientes.Infrastructure.DataAccess.Seeds;
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers(options => options.Filters.Add<ApiExceptionFilter>());
+builder.Services.AddApiControllers();
 builder.Services.AddSwaggerDocumentation(); builder.Services.AddApplication(); builder.Services.AddInfrastructure(builder.Configuration);
 var app = builder.Build(); app.UseSwagger(); app.UseSwaggerUI();
 using (var scope = app.Services.CreateScope()) await DatabaseSeeder.SemearAsync(scope.ServiceProvider.GetRequiredService<GestaoClientesDbContext>());

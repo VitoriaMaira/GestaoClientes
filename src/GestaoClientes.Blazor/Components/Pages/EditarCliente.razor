@@ -1,0 +1,112 @@
+@page "/clientes/{Id:int}/editar"
+@inject ClienteApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Editar cliente</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>Editar cliente</h1>
+        <p>Atualize os dados pessoais do cliente.</p>
+    </div>
+</div>
+
+@if (carregando)
+{
+    <div class="panel empty-state">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>Carregando cliente...</div>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(erro))
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+    <a class="btn btn-outline-secondary" href="/">Voltar</a>
+}
+else if (model is not null)
+{
+    <ClienteForm Model="model"
+                 Processando="processando"
+                 TextoBotao="Salvar alterações"
+                 UrlCancelar="@($"/clientes/{Id}")"
+                 OnSubmit="Salvar" />
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ClienteFormModel? model;
+    private bool carregando = true;
+    private bool processando;
+    private string? erro;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        carregando = true;
+        erro = null;
+
+        try
+        {
+            var cliente = await Api.ObterAsync(Id);
+            var endereco = cliente.Enderecos.First();
+
+            model = new ClienteFormModel
+            {
+                Nome = cliente.Nome,
+                Cpf = cliente.Cpf,
+                Email = cliente.Email,
+                Telefone = cliente.Telefone,
+                DataNascimento = cliente.DataNascimento,
+                EnderecoCep = endereco.Cep,
+                EnderecoLogradouro = endereco.Logradouro,
+                EnderecoNumero = endereco.Numero,
+                EnderecoComplemento = endereco.Complemento,
+                EnderecoBairro = endereco.Bairro,
+                EnderecoCidade = endereco.Cidade,
+                EnderecoEstado = endereco.Estado
+            };
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        catch (HttpRequestException)
+        {
+            erro = "Não foi possível conectar à API.";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task Salvar()
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        processando = true;
+        erro = null;
+
+        try
+        {
+            await Api.AtualizarAsync(Id, model);
+            Navigation.NavigateTo($"/clientes/{Id}");
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        catch (HttpRequestException)
+        {
+            erro = "Não foi possível conectar à API.";
+        }
+        finally
+        {
+            processando = false;
+        }
+    }
+}

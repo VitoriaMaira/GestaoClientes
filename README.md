@@ -1,6 +1,39 @@
 # Gestão de Clientes
 
-Aplicação web em .NET 10 para cadastro, consulta, atualização, inativação e reativação de clientes, incluindo o gerenciamento de seus endereços.
+Aplicação web em .NET 10 para cadastro, consulta, atualização, inativação e
+reativação de clientes, incluindo o gerenciamento de seus endereços.
+
+O projeto foi desenvolvido como uma evolução de um CRUD tradicional. Além das
+operações básicas, ele protege regras de negócio, separa responsabilidades entre
+as camadas e entrega um fluxo completo entre frontend, API e banco de dados.
+
+## Diferenciais do projeto
+
+- **Arquitetura organizada:** separação entre Domain, Application,
+  Infrastructure, API e Blazor, seguindo DDD de forma simples e adequada ao
+  tamanho da aplicação;
+- **Domínio protegido:** regras importantes ficam nas entidades e nos casos de
+  uso, evitando lógica de negócio espalhada pelos controllers;
+- **Exclusão lógica:** clientes não são apagados do banco. Eles podem ser
+  inativados e posteriormente reativados, preservando o histórico;
+- **Endereços completos:** um cliente pode possuir vários endereços, mas apenas
+  um pode ser principal e o único endereço não pode ser excluído;
+- **Paginação eficiente:** filtros e paginação são aplicados diretamente no SQL
+  Server, sem carregar todos os registros na memória;
+- **Contratos bem definidos:** a API utiliza DTOs específicos para cadastro,
+  atualização, consulta e gerenciamento de endereços, sem expor as entidades
+  do domínio;
+- **Erros padronizados:** validações e exceções são tratadas de forma
+  centralizada, com respostas consistentes e códigos HTTP adequados;
+- **Frontend desacoplado:** o Blazor possui modelos próprios e consome a API
+  exclusivamente por HTTP, sem acessar diretamente a Application ou o banco;
+- **Banco reproduzível:** migrations criam a estrutura e um seeder idempotente
+  disponibiliza dados de demonstração sem duplicá-los;
+- **Qualidade verificada:** regras críticas possuem testes automatizados e o
+  projeto foi validado com um fluxo real de cadastro, edição, endereços,
+  inativação e reativação;
+- **Execução simplificada:** um perfil do Visual Studio inicia API e Blazor
+  juntos, enquanto o arquivo `.http` permite testar toda a API rapidamente.
 
 ## Tecnologias
 
@@ -26,7 +59,9 @@ tests/
 └── GestaoClientes.UnitTests
 ```
 
-O Blazor consome a API por HTTP e não acessa o banco de dados diretamente. Os controllers são pequenos, os casos de uso coordenam as operações e as entidades protegem as regras do domínio.
+O Blazor consome a API por HTTP e não acessa o banco de dados diretamente. Os
+controllers são pequenos, os casos de uso coordenam as operações e as entidades
+protegem as regras do domínio.
 
 ## Executar no Visual Studio
 
@@ -49,7 +84,9 @@ Endereços locais padrão:
 - Swagger: `https://localhost:7216/swagger`;
 - Blazor: `https://localhost:7100`.
 
-Se utilizar outro SQL Server, altere a conexão `SqlServer` em `src/GestaoClientes.Api/appsettings.json`. Se mudar a porta da API, atualize `ApiUrl` em `src/GestaoClientes.Blazor/appsettings.json`.
+Se utilizar outro SQL Server, altere a conexão `SqlServer` em
+`src/GestaoClientes.Api/appsettings.json`. Se mudar a porta da API, atualize
+`ApiUrl` em `src/GestaoClientes.Blazor/appsettings.json`.
 
 ## Banco de dados
 
@@ -94,7 +131,8 @@ DELETE /api/clientes/{id}/enderecos/{enderecoId}
 PUT    /api/clientes/{id}/enderecos/{enderecoId}/principal
 ```
 
-O arquivo `src/GestaoClientes.Api/GestaoClientes.Api.http` contém um fluxo completo para testar os endpoints pelo Visual Studio.
+O arquivo `src/GestaoClientes.Api/GestaoClientes.Api.http` contém um fluxo
+completo para testar os endpoints pelo Visual Studio.
 
 ## Regras principais
 
@@ -113,7 +151,8 @@ Execute:
 dotnet test
 ```
 
-Os testes cobrem as regras principais de cliente, CPF e endereços.
+Os 17 testes automatizados cobrem as regras principais de cliente, CPF e
+endereços, incluindo cenários de sucesso e violações das regras de negócio.
 
 ## Repositório
 

@@ -1,0 +1,220 @@
+@page "/clientes/{Id:int}"
+@inject ClienteApiClient Api
+@inject IJSRuntime Js
+
+<PageTitle>Detalhes do cliente</PageTitle>
+
+@if (carregando)
+{
+    <div class="panel empty-state">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>Carregando cliente...</div>
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(erro))
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+    <a class="btn btn-outline-secondary" href="/">Voltar</a>
+}
+else if (cliente is not null)
+{
+    <div class="page-heading">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h1>@cliente.Nome</h1>
+                <span class="status-badge @(cliente.Status == StatusCliente.Ativo ? "status-ativo" : "status-inativo")">
+                    @cliente.Status
+                </span>
+            </div>
+            <p>Cliente cadastrado em @cliente.DataCadastro.ToLocalTime().ToString("dd/MM/yyyy 'às' HH:mm").</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" href="/">Voltar</a>
+            <a class="btn btn-primary" href="clientes/@Id/editar">Editar</a>
+            <button class="btn @(cliente.Status == StatusCliente.Ativo ? "btn-outline-danger" : "btn-outline-success")"
+                    @onclick="AlterarStatus">
+                @(cliente.Status == StatusCliente.Ativo ? "Inativar" : "Ativar")
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert alert-success">@mensagem</div>
+    }
+
+    <section class="panel">
+        <h2 class="section-title">Dados do cliente</h2>
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-3">
+                <small class="text-secondary d-block">CPF</small>
+                <strong>@FormatarCpf(cliente.Cpf)</strong>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <small class="text-secondary d-block">E-mail</small>
+                <strong>@cliente.Email</strong>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <small class="text-secondary d-block">Telefone</small>
+                <strong>@FormatarTelefone(cliente.Telefone)</strong>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <small class="text-secondary d-block">Data de nascimento</small>
+                <strong>@cliente.DataNascimento.ToString("dd/MM/yyyy")</strong>
+            </div>
+            <div class="col-12 col-md-6">
+                <small class="text-secondary d-block">Última atualização</small>
+                <strong>@FormatarAtualizacao(cliente.DataAtualizacao)</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="section-title mb-0">Endereços</h2>
+            <span class="text-secondary small">@cliente.Enderecos.Count endereço(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Endereço</th>
+                        <th>CEP</th>
+                        <th>Cidade/UF</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var endereco in cliente.Enderecos.OrderByDescending(item => item.Principal))
+                    {
+                        <tr>
+                            <td>
+                                @endereco.Logradouro, @endereco.Numero
+                                @if (!string.IsNullOrWhiteSpace(endereco.Complemento))
+                                {
+                                    <small class="text-secondary d-block">@endereco.Complemento</small>
+                                }
+                            </td>
+                            <td>@FormatarCep(endereco.Cep)</td>
+                            <td>@endereco.Cidade/@endereco.Estado</td>
+                            <td>
+                                @if (endereco.Principal)
+                                {
+                                    <span class="badge text-bg-primary">Principal</span>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary">Secundário</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ClienteModel? cliente;
+    private bool carregando = true;
+    private string? erro;
+    private string? mensagem;
+
+    protected override Task OnParametersSetAsync()
+    {
+        return Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        carregando = true;
+        erro = null;
+
+        try
+        {
+            cliente = await Api.ObterAsync(Id);
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        catch (HttpRequestException)
+        {
+            erro = "Não foi possível conectar à API.";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task AlterarStatus()
+    {
+        if (cliente is null)
+        {
+            return;
+        }
+
+        var ativar = cliente.Status == StatusCliente.Inativo;
+        var acao = ativar ? "ativar" : "inativar";
+        var confirmou = await Js.InvokeAsync<bool>("confirm", $"Deseja realmente {acao} este cliente?");
+
+        if (!confirmou)
+        {
+            return;
+        }
+
+        try
+        {
+            if (ativar)
+            {
+                await Api.AtivarAsync(Id);
+            }
+            else
+            {
+                await Api.InativarAsync(Id);
+            }
+
+            mensagem = ativar ? "Cliente ativado com sucesso." : "Cliente inativado com sucesso.";
+            await Carregar();
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+    }
+
+    private static string FormatarCpf(string valor)
+    {
+        var numeros = new string(valor.Where(char.IsDigit).ToArray());
+        return numeros.Length == 11
+            ? $"{numeros[..3]}.{numeros[3..6]}.{numeros[6..9]}-{numeros[9..]}"
+            : valor;
+    }
+
+    private static string FormatarTelefone(string valor)
+    {
+        var numeros = new string(valor.Where(char.IsDigit).ToArray());
+        return numeros.Length == 11
+            ? $"({numeros[..2]}) {numeros[2..7]}-{numeros[7..]}"
+            : valor;
+    }
+
+    private static string FormatarCep(string valor)
+    {
+        var numeros = new string(valor.Where(char.IsDigit).ToArray());
+        return numeros.Length == 8 ? $"{numeros[..5]}-{numeros[5..]}" : valor;
+    }
+
+    private static string FormatarAtualizacao(DateTime? data)
+    {
+        return data.HasValue
+            ? data.Value.ToLocalTime().ToString("dd/MM/yyyy 'às' HH:mm")
+            : "Ainda não houve atualização";
+    }
+}

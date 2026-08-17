@@ -1,6 +1,77 @@
-@GestaoClientes.Api_HostAddress = http://localhost:5202
+@Host = http://localhost:5202
 
-GET {{GestaoClientes.Api_HostAddress}}/weatherforecast/
+### Swagger
+GET {{Host}}/swagger/v1/swagger.json
 Accept: application/json
 
-###
+### Lista clientes ativos
+GET {{Host}}/api/clientes?pagina=1&tamanhoPagina=10&status=Ativo
+Accept: application/json
+
+### Cadastra um cliente
+# @name cadastrarCliente
+POST {{Host}}/api/clientes
+Content-Type: application/json
+
+{
+  "nome": "Cliente de Teste",
+  "cpf": "39053344705",
+  "email": "cliente.teste@exemplo.com",
+  "telefone": "11988887777",
+  "dataNascimento": "1995-05-20",
+  "endereco": {
+    "cep": "01310100",
+    "logradouro": "Avenida Paulista",
+    "numero": "1000",
+    "complemento": "Conjunto 10",
+    "bairro": "Bela Vista",
+    "cidade": "São Paulo",
+    "estado": "SP",
+    "principal": true
+  }
+}
+
+### Consulta o cliente cadastrado
+GET {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}
+Accept: application/json
+
+### Atualiza os dados do cliente
+PUT {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}
+Content-Type: application/json
+
+{
+  "nome": "Cliente de Teste Atualizado",
+  "cpf": "39053344705",
+  "email": "cliente.atualizado@exemplo.com",
+  "telefone": "11977776666",
+  "dataNascimento": "1995-05-20"
+}
+
+### Adiciona um endereço
+POST {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}/enderecos
+Content-Type: application/json
+
+{
+  "cep": "04538133",
+  "logradouro": "Rua das Flores",
+  "numero": "50",
+  "complemento": null,
+  "bairro": "Itaim Bibi",
+  "cidade": "São Paulo",
+  "estado": "SP",
+  "principal": false
+}
+
+### Lista os endereços
+# @name listarEnderecos
+GET {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}/enderecos
+Accept: application/json
+
+### Define o segundo endereço como principal
+PUT {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}/enderecos/{{listarEnderecos.response.body.$[1].id}}/principal
+
+### Inativa o cliente
+DELETE {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}
+
+### Reativa o cliente
+PUT {{Host}}/api/clientes/{{cadastrarCliente.response.body.$.dados.id}}/ativar

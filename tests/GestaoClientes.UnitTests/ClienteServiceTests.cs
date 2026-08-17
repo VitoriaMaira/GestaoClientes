@@ -1,20 +1,22 @@
 using GestaoClientes.Application;
-using GestaoClientes.Domain;
+using GestaoClientes.Domain.Entities;
+using GestaoClientes.Domain.Enums;
+using GestaoClientes.Domain.Repositories;
 namespace GestaoClientes.UnitTests;
 public class ClienteServiceTests
 {
     [Fact] public async Task Nao_permite_cpf_duplicado()
     {
         var repo = new RepositorioFalso { CpfExiste = true };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => new ClienteService(repo).CriarAsync(Requisicao()));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => new ClienteService(repo, repo).CriarAsync(Requisicao()));
     }
     [Fact] public async Task Nao_permite_email_duplicado()
     {
         var repo = new RepositorioFalso { EmailExiste = true };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => new ClienteService(repo).CriarAsync(Requisicao()));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => new ClienteService(repo, repo).CriarAsync(Requisicao()));
     }
     static CriarClienteRequest Requisicao() => new("Maria", "52998224725", "maria@exemplo.com", "11999999999", new DateOnly(1990, 1, 1), new("01001000", "Rua A", "1", null, "Centro", "São Paulo", "SP", true));
-    private sealed class RepositorioFalso : IClienteRepository
+    private sealed class RepositorioFalso : IClienteRepository, IUnitOfWork
     {
         public bool CpfExiste { get; init; } public bool EmailExiste { get; init; }
         public Task<bool> CpfExisteAsync(string cpf, int? ignorarId = null) => Task.FromResult(CpfExiste);

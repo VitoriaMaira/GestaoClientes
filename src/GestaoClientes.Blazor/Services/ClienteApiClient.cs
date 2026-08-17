@@ -44,7 +44,7 @@ public sealed class ClienteApiClient(HttpClient httpClient)
             model.Email,
             model.Telefone,
             model.DataNascimento!.Value,
-            MapearEndereco(model.Endereco));
+            MapearEndereco(model));
 
         var response = await httpClient.PostAsJsonAsync("api/clientes", request, JsonOptions);
         return await LerRespostaAsync<ClienteModel>(response);
@@ -163,6 +163,19 @@ public sealed class ClienteApiClient(HttpClient httpClient)
             model.Cidade,
             model.Estado,
             model.Principal);
+    }
+
+    private static EnderecoRequest MapearEndereco(ClienteFormModel model)
+    {
+        return new EnderecoRequest(
+            model.EnderecoCep,
+            model.EnderecoLogradouro,
+            model.EnderecoNumero,
+            model.EnderecoComplemento,
+            model.EnderecoBairro,
+            model.EnderecoCidade,
+            model.EnderecoEstado,
+            true);
     }
 
     private static void AdicionarParametro(

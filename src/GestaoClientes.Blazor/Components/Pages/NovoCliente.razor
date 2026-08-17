@@ -1,0 +1,53 @@
+@page "/clientes/novo"
+@inject ClienteApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Novo cliente</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>Novo cliente</h1>
+        <p>Cadastre os dados pessoais e o primeiro endereço.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(erro))
+{
+    <div class="alert alert-danger" role="alert">@erro</div>
+}
+
+<ClienteForm Model="model"
+             ExibirEndereco="true"
+             Processando="processando"
+             TextoBotao="Cadastrar cliente"
+             OnSubmit="Cadastrar" />
+
+@code {
+    private readonly ClienteFormModel model = new();
+    private bool processando;
+    private string? erro;
+
+    private async Task Cadastrar()
+    {
+        processando = true;
+        erro = null;
+
+        try
+        {
+            var cliente = await Api.CriarAsync(model);
+            Navigation.NavigateTo($"/clientes/{cliente.Id}");
+        }
+        catch (ClienteApiException exception)
+        {
+            erro = exception.Message;
+        }
+        catch (HttpRequestException)
+        {
+            erro = "Não foi possível conectar à API.";
+        }
+        finally
+        {
+            processando = false;
+        }
+    }
+}

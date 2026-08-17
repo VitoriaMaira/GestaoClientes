@@ -1,0 +1,109 @@
+<EditForm Model="Model" OnValidSubmit="Salvar">
+    <DataAnnotationsValidator />
+
+    <div class="panel">
+        <h2 class="section-title">Dados pessoais</h2>
+        <div class="row g-3">
+            <div class="col-12 col-md-7">
+                <label class="form-label" for="nome-cliente">Nome</label>
+                <InputText id="nome-cliente" class="form-control" @bind-Value="Model.Nome" />
+                <ValidationMessage For="() => Model.Nome" />
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="cpf-cliente">CPF</label>
+                <InputText id="cpf-cliente" class="form-control" @bind-Value="Model.Cpf" />
+                <ValidationMessage For="() => Model.Cpf" />
+            </div>
+            <div class="col-12 col-md-7">
+                <label class="form-label" for="email-cliente">E-mail</label>
+                <InputText id="email-cliente" class="form-control" type="email" @bind-Value="Model.Email" />
+                <ValidationMessage For="() => Model.Email" />
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="telefone-cliente">Telefone</label>
+                <InputText id="telefone-cliente" class="form-control" @bind-Value="Model.Telefone" />
+                <ValidationMessage For="() => Model.Telefone" />
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="nascimento-cliente">Data de nascimento</label>
+                <InputDate id="nascimento-cliente" class="form-control" @bind-Value="Model.DataNascimento" />
+                <ValidationMessage For="() => Model.DataNascimento" />
+            </div>
+        </div>
+    </div>
+
+    @if (ExibirEndereco)
+    {
+        <div class="panel">
+            <h2 class="section-title">Endereço principal</h2>
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="cep-cliente">CEP</label>
+                    <InputText id="cep-cliente" class="form-control" @bind-Value="Model.EnderecoCep" />
+                    <ValidationMessage For="() => Model.EnderecoCep" />
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label" for="logradouro-cliente">Logradouro</label>
+                    <InputText id="logradouro-cliente" class="form-control" @bind-Value="Model.EnderecoLogradouro" />
+                    <ValidationMessage For="() => Model.EnderecoLogradouro" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="numero-cliente">Número</label>
+                    <InputText id="numero-cliente" class="form-control" @bind-Value="Model.EnderecoNumero" />
+                    <ValidationMessage For="() => Model.EnderecoNumero" />
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label" for="complemento-cliente">Complemento</label>
+                    <InputText id="complemento-cliente" class="form-control" @bind-Value="Model.EnderecoComplemento" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="bairro-cliente">Bairro</label>
+                    <InputText id="bairro-cliente" class="form-control" @bind-Value="Model.EnderecoBairro" />
+                    <ValidationMessage For="() => Model.EnderecoBairro" />
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label" for="cidade-cliente">Cidade</label>
+                    <InputText id="cidade-cliente" class="form-control" @bind-Value="Model.EnderecoCidade" />
+                    <ValidationMessage For="() => Model.EnderecoCidade" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="estado-cliente">Estado</label>
+                    <InputText id="estado-cliente" class="form-control text-uppercase" maxlength="2" @bind-Value="Model.EnderecoEstado" />
+                    <ValidationMessage For="() => Model.EnderecoEstado" />
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
+        <a class="btn btn-outline-secondary" href="@UrlCancelar">Cancelar</a>
+        <button class="btn btn-primary" type="submit" disabled="@Processando">
+            @(Processando ? "Salvando..." : TextoBotao)
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public ClienteFormModel Model { get; set; } = null!;
+
+    [Parameter]
+    public bool ExibirEndereco { get; set; }
+
+    [Parameter]
+    public bool Processando { get; set; }
+
+    [Parameter]
+    public string TextoBotao { get; set; } = "Salvar";
+
+    [Parameter]
+    public string UrlCancelar { get; set; } = "/";
+
+    [Parameter, EditorRequired]
+    public EventCallback OnSubmit { get; set; }
+
+    private Task Salvar()
+    {
+        return OnSubmit.InvokeAsync();
+    }
+}

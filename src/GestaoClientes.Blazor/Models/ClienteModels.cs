@@ -58,7 +58,26 @@ public sealed class ClienteFormModel
     [Required(ErrorMessage = "Informe a data de nascimento.")]
     public DateOnly? DataNascimento { get; set; }
 
-    public EnderecoFormModel Endereco { get; set; } = new();
+    [Required(ErrorMessage = "Informe o CEP.")]
+    public string EnderecoCep { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe o logradouro.")]
+    public string EnderecoLogradouro { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe o número.")]
+    public string EnderecoNumero { get; set; } = string.Empty;
+
+    public string? EnderecoComplemento { get; set; }
+
+    [Required(ErrorMessage = "Informe o bairro.")]
+    public string EnderecoBairro { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe a cidade.")]
+    public string EnderecoCidade { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Informe o estado.")]
+    [StringLength(2, MinimumLength = 2, ErrorMessage = "Use a sigla do estado com 2 letras.")]
+    public string EnderecoEstado { get; set; } = string.Empty;
 }
 
 public sealed class EnderecoFormModel

@@ -1,42 +1,15 @@
 @page "/"
-@using System.Net.Http.Json
-@using GestaoClientes.Application.Clientes.Common
-@using GestaoClientes.Application.Common.Responses
-@inject IHttpClientFactory Http
 
-<PageTitle>Gestão de Clientes</PageTitle>
+<PageTitle>Clientes</PageTitle>
 
-<h1>Gestão de Clientes</h1>
-<p>Listagem de clientes ativos cadastrados.</p>
+<div class="page-heading">
+    <div>
+        <h1>Clientes</h1>
+        <p>Consulte e gerencie os clientes cadastrados.</p>
+    </div>
+    <a class="btn btn-primary" href="clientes/novo">Novo cliente</a>
+</div>
 
-@if (erro is not null)
-{
-    <div class="alert alert-warning">@erro</div>
-}
-else if (clientes is null)
-{
-    <p>Carregando...</p>
-}
-else
-{
-    <table class="table">
-        <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Status</th></tr></thead>
-        <tbody>
-        @foreach (var cliente in clientes.Items)
-        {
-            <tr><td>@cliente.Nome</td><td>@cliente.Cpf</td><td>@cliente.Email</td><td>@cliente.Telefone</td><td>@cliente.Status</td></tr>
-        }
-        </tbody>
-    </table>
-}
-
-@code {
-    private Paginado<ClienteResponse>? clientes;
-    private string? erro;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try { clientes = (await Http.CreateClient("Api").GetFromJsonAsync<ApiResponse<Paginado<ClienteResponse>>>("api/clientes"))?.Dados; }
-        catch { erro = "Não foi possível conectar à API. Inicie GestaoClientes.Api antes do frontend."; }
-    }
-}
+<div class="panel empty-state">
+    A listagem de clientes será carregada nesta página.
+</div>

@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "API e Blazor",
+    "Projects": [
+      {
+        "Path": "src\\GestaoClientes.Api\\GestaoClientes.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\GestaoClientes.Blazor\\GestaoClientes.Blazor.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
